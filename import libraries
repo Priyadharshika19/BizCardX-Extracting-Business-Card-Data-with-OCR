@@ -1,4 +1,4 @@
-#install essential libraries
+#install packages
 !pip install -q streamlit
 !npm install localtunnel
 !pip install easyocr
