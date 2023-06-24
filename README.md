@@ -1,5 +1,9 @@
 # BizCardX-Extracting-Business-Card-Data-with-OCR
   Creating application using google colab
+  Purpose of this project is to 
+  1. extract data from business card image and text image.
+  2. Analyse extracted data and store it into the database
+  3. View and delete data
   
 **Step1:**
 **Install the required packages**
