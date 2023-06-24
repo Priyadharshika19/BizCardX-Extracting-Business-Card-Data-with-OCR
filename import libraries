@@ -1,0 +1,21 @@
+#install essential libraries
+!pip install -q streamlit
+!npm install localtunnel
+!pip install easyocr
+!pip install psycopg2
+!pip install streamlit-option-menu
+!pip install googletrans==3.1.0a0
+!pip install pymongo
+
+#import libraries
+import numpy as np
+import re
+import cv2
+import pandas as pd
+import easyocr
+from PIL import Image
+import googletrans
+from googletrans import Translator
+import pymongo
+import streamlit as st
+from streamlit_option_menu import option_menu
