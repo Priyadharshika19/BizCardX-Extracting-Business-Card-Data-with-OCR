@@ -7,14 +7,13 @@ import easyocr
 from PIL import Image
 import googletrans
 from googletrans import Translator
+import streamlit as st
+from streamlit_option_menu import option_menu
 import pymongo
 client=pymongo.MongoClient("mongodb+srv://priya:******@cluster0.m4kzbjb.mongodb.net/?retryWrites=true&w=majority")
 db=client["Bizcard"]
 col_en=db["en_cards"]
 col_other=db["other_cards"]
-
-import streamlit as st
-from streamlit_option_menu import option_menu
 
 dict1={"Name":[], "company":[], "address":[], "website":[], "phone_no":[], "mail_id":[]}
 st.set_page_config(layout="wide")
@@ -33,9 +32,7 @@ background-color: #e48f76;
 {
 text-decoration-color: #e84d4c;
 background-color: #e48f76;
-
 }
-
 </style>
 """
 st.markdown(page_bg_img, unsafe_allow_html=True)
@@ -45,12 +42,6 @@ with st.sidebar:
         "IMAGE TO TEXT",
         ("BizCardX","Others","Manage Data","Contact Detail")
     )
-
-def extracted_data1(output):
-  temp=[]
-  for i in range(0,len(output)):
-    temp.append(output[i][1])
-  return temp
 
 def extracted_data1(output):
   temp=[]
@@ -154,6 +145,7 @@ if selected_page== "BizCardX":
               st.image(image)
           except:
             pass
+              
           if uploaded_file is not None:
             reader = easyocr.Reader(res)
             ex_data = reader.readtext(image, paragraph=True)
@@ -187,10 +179,10 @@ if selected_page== "BizCardX":
             col_en.insert_one(dict1)
             df=pd.DataFrame(dict1)
             st.dataframe(df)
+              
 if selected_page== "Others":
       st.subheader("Extracting Business Card Data")
       st.text("This app helps you to extract data from image and download extracted informations in the table form. ")
-
       uploaded_file = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
       lang_lst=pd.read_excel("/content/ocr_languages.xlsx")
       languages=lang_lst.loc[:,"Language"]
@@ -224,7 +216,6 @@ if selected_page== "Others":
             unsafe_allow_html=True)
           st.write(temp1)  
 
-          
           st.markdown(
             '__<p style="font-family:sans-serif; font-size: 20px;">Translated text in English</p>__',
             unsafe_allow_html=True)
