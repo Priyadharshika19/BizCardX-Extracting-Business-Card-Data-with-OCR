@@ -7,13 +7,14 @@ import easyocr
 from PIL import Image
 import googletrans
 from googletrans import Translator
-import streamlit as st
-from streamlit_option_menu import option_menu
 import pymongo
-client=pymongo.MongoClient("mongodb+srv://priya:******@cluster0.m4kzbjb.mongodb.net/?retryWrites=true&w=majority")
+client=pymongo.MongoClient("mongodb+srv://priya:generate@cluster0.m4kzbjb.mongodb.net/?retryWrites=true&w=majority")
 db=client["Bizcard"]
 col_en=db["en_cards"]
 col_other=db["other_cards"]
+
+import streamlit as st
+from streamlit_option_menu import option_menu
 
 dict1={"Name":[], "company":[], "address":[], "website":[], "phone_no":[], "mail_id":[]}
 st.set_page_config(layout="wide")
@@ -32,7 +33,9 @@ background-color: #e48f76;
 {
 text-decoration-color: #e84d4c;
 background-color: #e48f76;
+
 }
+
 </style>
 """
 st.markdown(page_bg_img, unsafe_allow_html=True)
@@ -42,6 +45,12 @@ with st.sidebar:
         "IMAGE TO TEXT",
         ("BizCardX","Others","Manage Data","Contact Detail")
     )
+
+def extracted_data1(output):
+  temp=[]
+  for i in range(0,len(output)):
+    temp.append(output[i][1])
+  return temp
 
 def extracted_data1(output):
   temp=[]
@@ -145,7 +154,6 @@ if selected_page== "BizCardX":
               st.image(image)
           except:
             pass
-              
           if uploaded_file is not None:
             reader = easyocr.Reader(res)
             ex_data = reader.readtext(image, paragraph=True)
@@ -179,14 +187,14 @@ if selected_page== "BizCardX":
             col_en.insert_one(dict1)
             df=pd.DataFrame(dict1)
             st.dataframe(df)
-              
 if selected_page== "Others":
-      st.subheader("Extracting Business Card Data")
+      st.subheader("Extracting text from image")
       st.text("This app helps you to extract data from image and download extracted informations in the table form. ")
+
       uploaded_file = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
       lang_lst=pd.read_excel("/content/ocr_languages.xlsx")
       languages=lang_lst.loc[:,"Language"]
-      selected1=st.multiselect("Choose the language to translate",languages)
+      selected1=st.multiselect("Choose the language of file",languages)
 
       res=[]
       for i in range(0,len(selected1)):
@@ -194,7 +202,7 @@ if selected_page== "Others":
         for i in tmp:
           res.append(i)
 
-    
+
       if st.button("Extract and Store"):
         c1,c2,c3=st.columns([1,1,1])
         try:
@@ -205,16 +213,17 @@ if selected_page== "Others":
           pass
         if uploaded_file is not None:
           reader = easyocr.Reader(res)
-          ex_data = reader.readtext(image, paragraph=True)  
-          data1=[]                     
+          ex_data = reader.readtext(image, paragraph=True)
+          data1=[]
           for i in range(0,len(ex_data)):
             data1.append(ex_data[i][1])
             temp1 = " ".join(data1)
-          
+
           st.markdown(
             '__<p style="font-family:sans-serif; font-size: 20px;">Extracted text </p>__',
             unsafe_allow_html=True)
-          st.write(temp1)  
+          st.write(temp1)
+
 
           st.markdown(
             '__<p style="font-family:sans-serif; font-size: 20px;">Translated text in English</p>__',
@@ -226,14 +235,14 @@ if selected_page== "Others":
           st.write(translated.text)
           txt=translated.text
           c1,c2,c3=st.columns([1,1,1])
-          with c2:          
+          with c2:
             st.download_button('Download ', txt, "text file" )
 if selected_page== "Manage Data":
       st.subheader("Extracted Documents")
       tab1, tab2= st.tabs(["English Cards", "Other Cards"])
       with tab1:
         en_cards_lst=[]
-        for ele in col_en.find({}): 
+        for ele in col_en.find({}):
           en_cards_lst.append(ele["Name"][0])
         select_doc=st.selectbox("Select card detail",en_cards_lst )
         #print(select_doc)
@@ -247,17 +256,38 @@ if selected_page== "Manage Data":
               en_card_detail["address"]=rec["address"][0]
               en_card_detail["website"]=rec["website"][0]
               en_card_detail["phone_no"]=rec["phone_no"][0]
-              en_card_detail["mail_id"]=rec["mail_id"][0]    
+              en_card_detail["mail_id"]=rec["mail_id"][0]
           en_card_df=pd.Series(en_card_detail)
-          st.write(en_card_df)
-          if st.button("Delete",key="1"):
-            for rec in col_en.find({}):
-              if rec["Name"][0] ==select_doc:
-                col_en.delete_one(rec)
-                st.write("Document deleted")
+          column1,column2=st.columns([1,1])
+          with column1:
+            st.write(en_card_df)
+            if st.button("Delete",key="1"):
+              for rec in col_en.find({}):
+                if rec["Name"][0] ==select_doc:
+                  col_en.delete_one(rec)
+                  st.write("Document deleted")
+          with column2:
+            Name=st.text_input("Name:")
+            company=st.text_input("Company:")
+            address=st.text_input("Address:")
+            website=st.text_input("Website:")
+            phone_num=st.text_input("Phone_no:")
+            mail_id=st.text_input("Mail_id:")
+
+            if st.button("Update"):
+              for record in col_en.find({}):
+                print(record)
+                y=record["_id"]
+                x=record["Name"][0]
+                if x == select_doc:
+                  col_en.delete_one(record)
+                  d={"Name":[Name],"company":[company],"address":[address],"website":[website],"phone_no":[phone_num],"mail_id":[mail_id]}
+                  col_en.insert_one(d)
+
+
       with tab2:
         other_cards_lst=[]
-        for ele in col_other.find({}): 
+        for ele in col_other.find({}):
           other_cards_lst.append(ele["data"])
         select_doc=st.selectbox("Select card detail",other_cards_lst )
         if st.button("Delete",key="2"):
@@ -270,6 +300,7 @@ if selected_page == "Contact Detail":
     st.write(">>BizCardX: Extracting Business Card Data")
     st.write(">>Created by: Priyadharshika.M")
     st.write(">>Linkedin page: https://www.linkedin.com/in/priyadharshika-m-176204269/")
-    st.write(">>Github Page: https://github.com/Priyadharshika19")              
+    st.write(">>Github Page: https://github.com/Priyadharshika19")
+
 
 !streamlit run bizcards.py &>/content/logs.txt & npx localtunnel --port 8501 & curl ipv4.icanhazip.com
